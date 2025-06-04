@@ -1,0 +1,56 @@
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+  refresh_interval = "30s"
+}
+
+otelcol.receiver.docker_logs "sandol_logs" {
+  discovery = discovery.docker.containers.receiver
+  include_stopped_containers = false
+}
+
+loki.write "default" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
+
+loki.process "container_logs" {
+  forward_to = [loki.write.default.receiver]
+
+  labels = {
+    container_name = "container.name",
+    service        = "container.labels.com.docker.compose.service",
+    project        = "container.labels.com.docker.compose.project"
+  }
+
+  stages = [
+    {
+      match = {
+        selector = "{container_name=~\".+\"}"
+        stages = [
+          {
+            regex = {
+              expression = ".*GET (/|/[^/]+/health).*"
+            }
+          },
+          {
+            drop = {
+              expression = ".*GET (/|/[^/]+/health).*"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
+
+otelcol.processor.batch "batch" {
+  timeout = "1s"
+}
+
+otelcol.service "alloy" {
+  extensions  = []
+  receivers   = [otelcol.receiver.docker_logs.sandol_logs.receiver]
+  processors  = [otelcol.processor.batch.batch.processor]
+  exporters   = [loki.process.container_logs.exporter]
+}

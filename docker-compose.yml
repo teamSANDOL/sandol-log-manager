@@ -1,20 +1,22 @@
 services:
   loki:
-    image: grafana/loki:2.9.0
+    image: grafana/loki:3.5.1
     container_name: loki
     ports:
       - "3100:3100"
     volumes:
       - ./loki/loki-config.yaml:/etc/loki/local-config.yaml
 
-  promtail:
-    image: grafana/promtail:2.9.0
-    container_name: promtail
+  alloy:
+    image: grafana/alloy:latest
+    container_name: alloy
     volumes:
-      - /var/log:/var/log
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
-      - ./promtail/promtail-config.yaml:/etc/promtail/promtail.yaml
-    command: -config.file=/etc/promtail/promtail.yaml
+      - /var/run/docker.sock:/var/run/docker.sock  # docker 로그 스트림 수집
+      - ./alloy/config.alloy:/etc/alloy/config.alloy
+    command:
+      - --config.file=/etc/alloy/config.alloy
+    depends_on:
+      - loki
 
   grafana:
     image: grafana/grafana:9.6.2
