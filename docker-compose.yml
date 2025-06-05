@@ -1,31 +1,40 @@
 services:
   loki:
-    image: grafana/loki:3.5.1
+    image: grafana/loki:latest
     container_name: loki
     ports:
       - "3100:3100"
     volumes:
       - ./loki/loki-config.yaml:/etc/loki/local-config.yaml
+      - ./data:/var/lib/loki
+    networks:
+      - sandol_network
 
   alloy:
     image: grafana/alloy:latest
     container_name: alloy
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock  # docker 로그 스트림 수집
-      - ./alloy/config.alloy:/etc/alloy/config.alloy
-    command:
-      - --config.file=/etc/alloy/config.alloy
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./config/alloy/config.alloy:/etc/alloy/config.alloy
+    command: ["run", "/etc/alloy/config.alloy"]
     depends_on:
       - loki
+    networks:
+      - sandol_network
 
   grafana:
-    image: grafana/grafana:9.6.2
+    image: grafana/grafana:latest
     container_name: grafana
     ports:
       - "3001:3000"
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./config/grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - sandol_network
 
 volumes:
   grafana_data:
+
+networks:
+  sandol_network:
