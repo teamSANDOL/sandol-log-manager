@@ -16,19 +16,40 @@ discovery.relabel "strip_slash_and_filter_sandol_team" {
     regex         = "/(.*)"
     target_label  = "service_name"
   }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_project"]
+    regex         = "sandol_team"
+    action        = "keep"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container_name"
+    replacement   = "$1"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    target_label  = "service"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_project"]
+    target_label  = "project"
+  }
+
+  rule {
+    target_label  = "platform"
+    replacement   = "docker"
+  }
 }
 
 loki.source.docker "sandol" {
   host    = "unix:///var/run/docker.sock"
   targets = discovery.relabel.strip_slash_and_filter_sandol_team.output
   relabel_rules = discovery.relabel.strip_slash_and_filter_sandol_team.rules
-
-  labels = {
-    container_name = "container.name",
-    service        = "container.labels.com.docker.compose.service",
-    project        = "container.labels.com.docker.compose.project",
-    platform       = "docker",
-  }
 
   forward_to = [loki.process.sandol.receiver]
 }
