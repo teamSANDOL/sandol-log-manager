@@ -8,3 +8,7 @@ datasources:
     isDefault: true
     jsonData:
       maxLines: 1000
+
+  - name: Prometheus
+    type: prometheus
+    url: http://prometheus:9090

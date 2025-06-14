@@ -1,3 +1,34 @@
+// ###############################
+// #### Metrics Configuration ####
+// ###############################
+
+prometheus.exporter.cadvisor "sandol_docker_metrics" {
+  docker_host = "unix:///var/run/docker.sock"
+
+  storage_duration = "5m"
+}
+
+
+// Configure a prometheus.scrape component to collect cadvisor metrics.
+prometheus.scrape "scraper" {
+  targets    = prometheus.exporter.cadvisor.sandol_docker_metrics.targets
+  forward_to = [ prometheus.remote_write.prometheus_storage.receiver ]
+
+
+  scrape_interval = "10s"
+}
+
+// Configure a prometheus.remote_write component to send metrics to a Prometheus server.
+prometheus.remote_write "prometheus_storage" {
+  endpoint {
+    url = "http://prometheus:9090/api/v1/write"
+  }
+}
+
+// ###############################
+// #### Logging Configuration ####
+// ###############################
+
 discovery.docker "containers" {
   host = "unix:///var/run/docker.sock"
 }
@@ -47,8 +78,8 @@ discovery.relabel "strip_slash_and_filter_sandol_team" {
 }
 
 loki.source.docker "sandol" {
-  host    = "unix:///var/run/docker.sock"
-  targets = discovery.relabel.strip_slash_and_filter_sandol_team.output
+  host          = "unix:///var/run/docker.sock"
+  targets       = discovery.relabel.strip_slash_and_filter_sandol_team.output
   relabel_rules = discovery.relabel.strip_slash_and_filter_sandol_team.rules
 
   forward_to = [loki.process.sandol.receiver]
