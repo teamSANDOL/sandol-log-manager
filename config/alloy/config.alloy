@@ -98,3 +98,8 @@ loki.write "default" {
     url = "http://loki:3100/loki/api/v1/push"
   }
 }
+
+logging {
+  level  = "warn"
+  format = "json"
+}
