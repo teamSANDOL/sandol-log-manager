@@ -31,6 +31,7 @@ prometheus.remote_write "prometheus_storage" {
 
 discovery.docker "containers" {
   host = "unix:///var/run/docker.sock"
+  refresh_interval = "15s"
 }
 
 discovery.relabel "strip_slash_and_filter_sandol_team" {
@@ -38,20 +39,20 @@ discovery.relabel "strip_slash_and_filter_sandol_team" {
 
   rule {
     source_labels = ["__meta_docker_container_label_com_docker_compose_project"]
-    regex         = "sandol_team"
+    regex         = ".+"
     action        = "keep"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    regex         = "alloy|loki|prometheus|grafana"
+    action        = "drop"
   }
 
   rule {
     source_labels = ["__meta_docker_container_name"]
     regex         = "/(.*)"
     target_label  = "service_name"
-  }
-
-  rule {
-    source_labels = ["__meta_docker_container_label_com_docker_compose_project"]
-    regex         = "sandol_team"
-    action        = "keep"
   }
 
   rule {

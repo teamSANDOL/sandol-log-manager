@@ -16,7 +16,8 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./config/alloy/config.alloy:/etc/alloy/config.alloy
-    command: ["run", "/etc/alloy/config.alloy"]
+      - alloy_data:/var/lib/alloy/data
+    command: ["run", "--storage.path=/var/lib/alloy/data", "/etc/alloy/config.alloy"]
     depends_on:
       - loki
     networks:
@@ -35,6 +36,7 @@ services:
 
 volumes:
   grafana_data:
+  alloy_data:
 
 networks:
   sandol_network:
