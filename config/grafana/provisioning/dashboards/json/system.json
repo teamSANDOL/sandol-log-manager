@@ -27,7 +27,7 @@
       },
       "options": {
         "mode": "markdown",
-        "content": "지금 Alloy 컨테이너는 Docker 소켓만 마운트한다. cAdvisor 는 컨테이너별 사용량을\n호스트의 cgroup 파일시스템에서 읽기 때문에, 이 상태에서는 자기 자신의 루트 cgroup\n하나만 보고한다. 그래서 아래 패널이 전부 빈다.\n\n확인 (운영은 포트를 노출하지 않으므로 컨테이너 안에서 쏜다):\n\n    docker exec prometheus wget -qO- \\\n      'http://localhost:9090/api/v1/query?query=count(container_last_seen)'\n\n`1` 이 나오면 아직 안 고친 상태다. 컨테이너 개수만큼 나와야 한다.\n\n고치려면 `docker-compose.yml` 과 `docker-compose.dev.yml` 의 alloy 에\n`privileged: true`, `cgroup: host`, `/sys:/sys:ro` 마운트를 넣는다.\nAlloy 가 뚫리면 호스트가 뚫리므로 팀에서 합의한 뒤 적용한다.\ncAdvisor 를 별도 컨테이너로 분리해 권한 범위를 좁히는 방법도 있다."
+        "content": "지금 Alloy 컨테이너는 Docker 소켓만 마운트한다. cAdvisor 는 컨테이너별 사용량을\n호스트의 cgroup 파일시스템에서 읽기 때문에, 이 상태에서는 자기 자신의 루트 cgroup\n하나만 보고한다. 그래서 아래 패널이 전부 빈다.\n\n확인 (운영은 포트를 노출하지 않으므로 컨테이너 안에서 쏜다):\n\n    docker exec prometheus wget -qO- \\\n      'http://localhost:9090/api/v1/query?query=count(container_last_seen{name!=\"\"})'\n\n`0` 이 나오면 아직 안 고친 상태다. 컨테이너 개수만큼 나와야 한다.\n\n고치려면 두 가지가 같이 필요하다. `privileged: true` 와 `cgroup: host` 는 필요 없다.\n\n1. `docker-compose.yml` 과 `docker-compose.dev.yml` 의 alloy 에 마운트 세 개를 넣는다.\n\n       /sys:/sys:ro\n       /var/lib/docker/:/var/lib/docker:ro\n       /:/rootfs:ro\n\n   `/var/lib/docker` 가 없으면 cgroup 은 읽어도 컨테이너 이름이 안 붙는다.\n   이 보드의 쿼리는 전부 {name!=\"\"} 로 거르므로 화면에는 아무것도 안 나온다.\n\n2. 호스트의 Docker 스토리지 드라이버를 overlay2 로 맞춘다.\n   Docker 29 기본값인 overlayfs(containerd 스냅샷터) 에서는\n   cAdvisor 가 컨테이너를 식별하지 못해, 마운트를 넣어도 이 보드가 빈다."
       }
     },
     {
