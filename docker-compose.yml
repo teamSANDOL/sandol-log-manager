@@ -15,11 +15,11 @@ services:
     container_name: alloy
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./config/alloy/config.alloy:/etc/alloy/config.alloy
+      - ./config/alloy/config.alloy:/etc/alloy/config.alloy:ro
       - alloy_data:/var/lib/alloy/data
       - /sys:/sys:ro
-      - /var/lib/docker/:/var/lib/docker:ro
-      - /:/rootfs:ro
+      - /proc:/rootfs/proc:ro
+      - /var/lib/docker:/rootfs/var/lib/docker:ro
     command: ["run", "--storage.path=/var/lib/alloy/data", "/etc/alloy/config.alloy"]
     depends_on:
       - loki
