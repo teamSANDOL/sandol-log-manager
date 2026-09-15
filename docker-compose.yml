@@ -17,6 +17,9 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./config/alloy/config.alloy:/etc/alloy/config.alloy
       - alloy_data:/var/lib/alloy/data
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /:/rootfs:ro
     command: ["run", "--storage.path=/var/lib/alloy/data", "/etc/alloy/config.alloy"]
     depends_on:
       - loki

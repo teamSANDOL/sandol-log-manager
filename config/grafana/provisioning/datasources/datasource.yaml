@@ -1,7 +1,17 @@
 apiVersion: 1
 
+# uid 를 뒤늦게 붙였다. 기존 볼륨에 uid 없는 같은 이름이 남아 있으면
+# 갱신이 실패하므로 지우고 다시 만든다.
+deleteDatasources:
+  - name: Loki
+    orgId: 1
+  - name: Prometheus
+    orgId: 1
+
+# uid 는 대시보드 JSON 이 참조하므로 바꾸지 않는다.
 datasources:
   - name: Loki
+    uid: loki
     type: loki
     access: proxy
     url: http://loki:3100
@@ -10,5 +20,7 @@ datasources:
       maxLines: 1000
 
   - name: Prometheus
+    uid: prometheus
     type: prometheus
+    access: proxy
     url: http://prometheus:9090

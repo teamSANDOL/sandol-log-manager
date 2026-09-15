@@ -4,7 +4,6 @@
 
 prometheus.exporter.cadvisor "sandol_docker_metrics" {
   docker_host = "unix:///var/run/docker.sock"
-
   storage_duration = "5m"
 }
 
@@ -37,9 +36,11 @@ discovery.docker "containers" {
 discovery.relabel "strip_slash_and_filter_sandol_team" {
   targets = discovery.docker.containers.targets
 
+  // 같은 호스트의 다른 compose project 로그가 섞이지 않게 프로젝트명을 고정한다.
+  // .env 의 COMPOSE_PROJECT_NAME 과 일치해야 한다.
   rule {
     source_labels = ["__meta_docker_container_label_com_docker_compose_project"]
-    regex         = ".+"
+    regex         = "sandol_team"
     action        = "keep"
   }
 
@@ -87,8 +88,11 @@ loki.source.docker "sandol" {
 }
 
 loki.process "sandol" {
+  // 성공한 health check 만 버린다. 2xx 로 제한해서 실패한 것은 남긴다.
+  // 앞 대안은 uvicorn 접근 로그, 뒤 대안은 경로가 / 인 NestJS health check 다.
+  // 경로 뒤에 경계를 두지 않으면 GET 요청 로그 전체가 걸린다.
   stage.drop {
-    expression = ".*GET (/|/[^/]+/health).*"
+    expression = "(GET|HEAD) (/[a-z0-9-]+)*/health(/live)? HTTP/1\\.[01]\" 2[0-9][0-9]|GET / 2[0-9][0-9] [0-9]+ - curl/"
   }
 
   forward_to = [loki.write.default.receiver]

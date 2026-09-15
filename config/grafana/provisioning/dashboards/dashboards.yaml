@@ -1,0 +1,15 @@
+apiVersion: 1
+
+# json/ 안의 대시보드를 30초마다 다시 읽는다.
+# 이 파일과 같은 디렉터리를 보게 하면 provider yaml 까지 스캔하므로 하위 폴더를 쓴다.
+providers:
+  - name: sandol
+    orgId: 1
+    folder: 산돌이
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/json
+      foldersFromFilesStructure: false
