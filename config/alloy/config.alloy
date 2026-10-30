@@ -88,6 +88,13 @@ loki.source.docker "sandol" {
 }
 
 loki.process "sandol" {
+  // Loki 는 max_chunk_age(1h)/2 = 30m 보다 오래된 항목을 400 으로 거부하고 재시도도 없다.
+  // 보내 봐야 버려지므로 그보다 짧은 20m 로 alloy 에서 먼저 버린다.
+  stage.drop {
+    older_than          = "20m"
+    drop_counter_reason = "too_old"
+  }
+
   // 성공한 health check 만 버린다. 2xx 로 제한해서 실패한 것은 남긴다.
   // 앞 대안은 uvicorn 접근 로그, 뒤 대안은 경로가 / 인 NestJS health check 다.
   // 경로 뒤에 경계를 두지 않으면 GET 요청 로그 전체가 걸린다.
