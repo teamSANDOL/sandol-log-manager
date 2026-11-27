@@ -20,7 +20,8 @@ prometheus.scrape "scraper" {
 // Configure a prometheus.remote_write component to send metrics to a Prometheus server.
 prometheus.remote_write "prometheus_storage" {
   endpoint {
-    url = "http://prometheus:9090/api/v1/write"
+    // 원격 prometheus 로 보내려면 PROMETHEUS_REMOTE_WRITE_URL 을 지정한다. 미지정이면 기존 값.
+    url = coalesce(sys.env("PROMETHEUS_REMOTE_WRITE_URL"), "http://prometheus:9090/api/v1/write")
   }
 }
 
@@ -38,9 +39,11 @@ discovery.relabel "strip_slash_and_filter_sandol_team" {
 
   // 같은 호스트의 다른 compose project 로그가 섞이지 않게 프로젝트명을 고정한다.
   // .env 의 COMPOSE_PROJECT_NAME 과 일치해야 한다.
+  // 인증 서버가 분리되면 sandol-auth 프로젝트(백업·복원 포함)도 같은 라벨 체계로 수집한다.
+  // 해당 프로젝트가 없는 호스트에서는 매칭되는 컨테이너가 없어 동작이 달라지지 않는다.
   rule {
     source_labels = ["__meta_docker_container_label_com_docker_compose_project"]
-    regex         = "sandol_team"
+    regex         = "sandol_team|sandol-auth|sandol-auth-backup|sandol-auth-restore"
     action        = "keep"
   }
 
@@ -107,7 +110,8 @@ loki.process "sandol" {
 
 loki.write "default" {
   endpoint {
-    url = "http://loki:3100/loki/api/v1/push"
+    // 원격 loki 로 보내려면 LOKI_URL 을 지정한다. 미지정이면 기존 값.
+    url = coalesce(sys.env("LOKI_URL"), "http://loki:3100/loki/api/v1/push")
   }
 }
 
